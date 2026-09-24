@@ -1,0 +1,283 @@
+---
+import Logo from '../components/Logo.astro';
+import Settings from '../components/btn/Settings.astro';
+---
+
+<header>
+  <Logo />
+  <h1>W(log)</h1>
+  <p>Without Loss Of Generality, a Web Blog about Mathematics, Physics, Computer Science, and other STEM topics.</p>
+  <a href='/' target='_blank'>
+    <svg
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      stroke-width='2'
+      stroke-linecap='round'
+      stroke-linejoin='round'
+    >
+      <circle cx='12' cy='8' r='5'></circle>
+      <path d='M20 21a8 8 0 0 0-16 0'></path>
+    </svg>
+    <span>Who am I?</span>
+  </a>
+
+  <Settings />
+</header>
+
+<style>
+  @property --rise {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+  @property --settle {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+  @property --hairline {
+    syntax: '<number>';
+    inherits: true;
+    initial-value: 0;
+  }
+
+  @keyframes to-rise {
+    to {
+      --rise: 1;
+    }
+  }
+  @keyframes to-settle {
+    to {
+      --settle: 1;
+    }
+  }
+  @keyframes to-hairline {
+    to {
+      --hairline: 1;
+    }
+  }
+
+  header {
+    --bar-max-w: 72rem;
+    --bar-h-1: 5rem;
+    --pad-x: 1.75rem;
+    --col-gap: 0.75rem;
+    --row-gap: 1.75rem;
+    --logo-h-0: 16rem;
+    --title-fs-0: 4.5rem;
+    --title-ratio-0: 1.25;
+    --desc-fs-0: 1.125rem;
+    --desc-ratio-0: 1.65;
+    --desc-lines: 3;
+    --btn-h-0: 4rem;
+    --btn-max-w: 12rem;
+
+    --bar-w: min(var(--bar-max-w), 100%);
+    --edge: calc((100% - var(--bar-w)) / 2);
+    --edge-l: calc(var(--edge) + var(--pad-x));
+    --edge-r: calc(100% - var(--edge-l));
+    --title-h-0: calc(var(--title-fs-0) * var(--title-ratio-0));
+    --desc-h-0: calc(var(--desc-lines) * var(--desc-fs-0) * var(--desc-ratio-0));
+    --col-h: calc(var(--logo-h-0) + var(--title-h-0) + var(--desc-h-0) + var(--btn-h-0) + 3 * var(--row-gap));
+    --logo-y-0: calc(50svh - var(--col-h) / 2);
+    --title-y-0: calc(var(--logo-y-0) + var(--logo-h-0) + var(--row-gap));
+    --desc-y-0: calc(var(--title-y-0) + var(--title-h-0) + var(--row-gap));
+    --btn-y-0: calc(var(--desc-y-0) + var(--desc-h-0) + var(--row-gap));
+    --btn-h-1: calc(var(--bar-h-1) / 1.75);
+    --btn-y-1: calc((var(--bar-h-1) - var(--btn-h-1)) / 2);
+    --btn-settle-len: calc(var(--btn-h-0) - var(--btn-h-1));
+    --settled: calc(var(--btn-y-0) - var(--btn-y-1) + var(--btn-settle-len));
+
+    @media (width <= 35.25rem) {
+      --desc-lines: 4;
+    }
+    @media (width < 8rem) {
+      --pad-x: 1.25rem;
+      --row-gap: 1.25rem;
+      --title-fs-0: 2.875rem;
+      --desc-fs-0: 1rem;
+      --btn-h-0: 3.5rem;
+    }
+
+    display: flex;
+    position: relative;
+    row-gap: var(--row-gap);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    margin-inline: auto;
+    background: var(--bg);
+    padding: var(--pad-x);
+    max-width: var(--bar-max-w);
+    height: 100svh;
+
+    @media (prefers-reduced-motion: no-preference) {
+      @supports (animation-timeline: scroll()) {
+        animation: to-hairline linear both;
+        animation-timeline: var(--timeline, scroll()); /* hack to prevent Lightning CSS from merging this */
+        animation-range: var(--settled) calc(var(--settled) + var(--bar-h-1));
+
+        &::before {
+          position: fixed;
+          inset: 0 var(--edge) auto;
+          box-shadow: 0 0 calc(0.5rem * var(--hairline)) black;
+          border-bottom: 1px solid color-mix(in oklch, var(--bg), var(--fg) calc(var(--hairline) * 25%));
+          background: var(--bg);
+          height: var(--bar-h-1);
+          content: '';
+        }
+
+        & > :global(#logo),
+        & > :is(h1, p, a) {
+          --rise-end: calc(var(--top-0) - var(--top-1));
+
+          position: fixed;
+          top: calc(var(--top-0) + (var(--top-1) - var(--top-0)) * var(--rise));
+          left: calc(50% + (var(--left-1) - 50%) * var(--settle));
+          translate: calc(-50% * (1 - var(--settle))) 0;
+          animation:
+            to-rise linear both,
+            to-settle linear both;
+          animation-timeline: var(--timeline, scroll()), var(--timeline, scroll());
+          animation-range:
+            0 var(--rise-end),
+            var(--rise-end) calc(var(--rise-end) + var(--settle-len));
+        }
+
+        & > p {
+          animation: to-rise linear both;
+          animation-timeline: var(--timeline, scroll());
+          animation-range: 0 var(--rise-end);
+        }
+      }
+    }
+
+    & > :global(#logo) {
+      --size: calc(var(--logo-h-0) + (var(--btn-h-1) - var(--logo-h-0)) * var(--settle));
+      --top-0: var(--logo-y-0);
+      --top-1: var(--btn-y-1);
+      --left-1: var(--edge-l);
+      --settle-len: calc(var(--logo-h-0) - var(--btn-h-1));
+
+      display: block;
+      width: var(--size);
+      height: var(--size);
+      overflow: visible;
+
+      & .o {
+        stroke-width: calc(10px + (15px - 10px) * var(--settle));
+      }
+      & .a {
+        stroke-width: calc(2px + (10px - 2px) * var(--settle));
+      }
+      & .p {
+        stroke-width: calc(7px + (15px - 7px) * var(--settle));
+      }
+    }
+
+    & > h1 {
+      --fs-1: 1.75rem;
+      --ratio-1: 1.35;
+      --ls-0: -0.02em;
+      --wt-0: 400;
+      --wt-1: 700;
+      --lh-1: calc(var(--fs-1) * var(--ratio-1));
+      --top-0: var(--title-y-0);
+      --top-1: calc((var(--bar-h-1) - var(--lh-1)) / 2);
+      --left-1: calc(var(--edge-l) + var(--btn-h-1) + var(--col-gap));
+      --settle-len: calc(var(--title-h-0) - var(--lh-1));
+
+      margin: 0;
+      background: linear-gradient(to right, var(--data-c6), var(--data-c1));
+      background-clip: text;
+      color: color-mix(in oklab, transparent, var(--fg) calc(var(--settle) * 100%));
+      font-weight: calc(var(--wt-0) + (var(--wt-1) - var(--wt-0)) * var(--settle));
+      font-size: calc(var(--title-fs-0) + (var(--fs-1) - var(--title-fs-0)) * var(--settle));
+      line-height: calc(var(--title-h-0) + (var(--lh-1) - var(--title-h-0)) * var(--settle));
+      letter-spacing: calc(var(--ls-0) * (1 - var(--settle)));
+    }
+
+    & > p {
+      --top-0: var(--desc-y-0);
+      --top-1: -50svh;
+      --left-1: 50%;
+
+      display: flex;
+      align-items: center;
+      margin: 0;
+      width: min(48ch, calc(var(--bar-w) - 2 * var(--pad-x)));
+      height: var(--desc-h-0);
+      font-size: var(--desc-fs-0);
+      line-height: var(--desc-ratio-0);
+      font-family: var(--sans);
+      text-align: center;
+      text-wrap: balance;
+    }
+
+    & > a {
+      --icon-0: 1.5rem;
+      --icon-1: calc(var(--btn-h-1) / 2);
+      --pad-0: 1.5rem;
+      --pad-1: calc((var(--btn-h-1) - var(--icon-1)) / 2);
+      --gap-0: 0.5rem;
+      --top-0: var(--btn-y-0);
+      --top-1: var(--btn-y-1);
+      --left-1: calc(var(--edge-r) - var(--btn-h-1) - var(--col-gap) - var(--btn-h-1));
+      --settle-len: var(--btn-settle-len);
+
+      display: flex;
+      column-gap: calc(var(--gap-0) * (1 - var(--settle)));
+      justify-content: flex-start;
+      align-items: center;
+      cursor: pointer;
+      border: 0;
+      border-radius: var(--btn-h-1);
+      background-color: color-mix(in oklch, var(--data-c3), var(--fg) 25%);
+      padding-inline: calc(var(--pad-0) + (var(--pad-1) - var(--pad-0)) * var(--settle));
+      max-width: calc(var(--btn-max-w) + (var(--btn-h-1) - var(--btn-max-w)) * var(--settle));
+      height: calc(var(--btn-h-0) + (var(--btn-h-1) - var(--btn-h-0)) * var(--settle));
+      overflow: hidden;
+      color: var(--bg);
+      font-weight: 550;
+      font-size: 1rem;
+      font-family: var(--sans);
+      letter-spacing: 0.013em;
+      text-decoration: none;
+      white-space: nowrap;
+
+      &:hover {
+        background-color: color-mix(in oklch, var(--data-c3), var(--fg) 50%);
+      }
+      &:active {
+        background-color: var(--data-c3);
+      }
+
+      & > svg {
+        --icon: calc(var(--icon-0) + (var(--icon-1) - var(--icon-0)) * var(--settle));
+
+        flex: none;
+        width: var(--icon);
+        height: var(--icon);
+      }
+      & > span {
+        flex: none;
+        opacity: calc(1 - var(--settle));
+      }
+    }
+
+    & > :global(button) {
+      --bg-subtle: var(--bg-subtle-solid);
+      --bg-hover: var(--bg-hover-solid);
+      --bg-active: var(--bg-active-solid);
+
+      position: fixed;
+      top: var(--btn-y-1);
+      right: var(--edge-l);
+      width: var(--btn-h-1);
+      height: var(--btn-h-1);
+    }
+  }
+</style>

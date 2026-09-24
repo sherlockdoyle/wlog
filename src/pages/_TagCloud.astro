@@ -1,0 +1,227 @@
+---
+import Link from '../components/Link.astro';
+
+export interface Props {
+  tags: Record<string, number>;
+}
+const { tags } = Astro.props;
+
+const charWidth = 0.6;
+
+const tagSizes = Object.entries(tags)
+  .map(([word, freq]) => {
+    const ratio = word.length * charWidth;
+    const h = Math.sqrt(freq / ratio),
+      w = h * ratio;
+    return { word, freq, w, h };
+  })
+  .sort((a, b) => b.freq - a.freq);
+
+interface Rect {
+  x: number;
+  y: number;
+  cw: number;
+  ch: number;
+  isRotated: boolean;
+  scaledH: number;
+}
+
+const placed: ((typeof tagSizes)[number] & Rect)[] = [];
+let cMinX = 0,
+  cMaxX = 0,
+  cMinY = 0,
+  cMaxY = 0;
+
+const scales = [0.8, 0.9, 1.0, 1.1, 1.2];
+const eps = 0.001;
+const attachMults = [
+  [0, 0],
+  [1, 0],
+  [0, 1],
+  [1, 1],
+  [0.5, 0],
+  [0.5, 1],
+  [0, 0.5],
+  [1, 0.5],
+];
+const candMults = [
+  [0, 0],
+  [-1, 0],
+  [0, -1],
+  [-1, -1],
+  [-0.5, 0],
+  [-0.5, -1],
+  [0, -0.5],
+  [-1, -0.5],
+];
+
+for (const tag of tagSizes) {
+  if (placed.length === 0) {
+    placed.push({ ...tag, x: -tag.w / 2, y: -tag.h / 2, cw: tag.w, ch: tag.h, isRotated: false, scaledH: tag.h });
+    cMinX = -tag.w / 2;
+    cMaxX = tag.w / 2;
+    cMinY = -tag.h / 2;
+    cMaxY = tag.h / 2;
+    continue;
+  }
+
+  let bestFit: Rect | null = null;
+  let minScore = Infinity;
+  for (const scale of scales) {
+    const sw = tag.w * scale;
+    const sh = tag.h * scale;
+    const scalePenalty = 1 + Math.abs(1 - scale) * 3;
+
+    const orientations = [
+      { cw: sw, ch: sh, isRotated: false, scaledH: sh, rotPenalty: 1.0 },
+      { cw: sh, ch: sw, isRotated: true, scaledH: sh, rotPenalty: 1.1 },
+    ];
+
+    for (const orient of orientations) {
+      const penalty = orient.rotPenalty * scalePenalty;
+
+      for (let i = 0; i < placed.length; ++i) {
+        const p = placed[i];
+
+        for (let j = 0; j < 8; ++j) {
+          const ptX = p.x + p.cw * attachMults[j][0];
+          const ptY = p.y + p.ch * attachMults[j][1];
+
+          for (let k = 0; k < 8; ++k) {
+            const cX = ptX + orient.cw * candMults[k][0];
+            const cY = ptY + orient.ch * candMults[k][1];
+
+            const newMinX = Math.min(cMinX, cX),
+              newMaxX = Math.max(cMaxX, cX + orient.cw),
+              newMinY = Math.min(cMinY, cY),
+              newMaxY = Math.max(cMaxY, cY + orient.ch);
+            const newW = newMaxX - newMinX,
+              newH = newMaxY - newMinY;
+            const aspectPenalty = Math.max(newW / newH, newH / newW);
+
+            const cx = cX + orient.cw / 2;
+            const cy = cY + orient.ch / 2;
+            const distToCenter = Math.hypot(cx, cy);
+
+            const score = (aspectPenalty * 1000 + distToCenter) * penalty;
+            if (score >= minScore) continue;
+
+            let intersects = false;
+            for (let plIdx = 0; plIdx < placed.length; ++plIdx) {
+              const pl = placed[plIdx];
+              if (
+                cX + orient.cw > pl.x + eps &&
+                pl.x + pl.cw > cX + eps &&
+                cY + orient.ch > pl.y + eps &&
+                pl.y + pl.ch > cY + eps
+              ) {
+                intersects = true;
+                break;
+              }
+            }
+
+            if (!intersects) {
+              minScore = score;
+              bestFit = {
+                x: cX,
+                y: cY,
+                cw: orient.cw,
+                ch: orient.ch,
+                isRotated: orient.isRotated,
+                scaledH: orient.scaledH,
+              };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (bestFit) {
+    placed.push({ ...tag, ...bestFit });
+    cMinX = Math.min(cMinX, bestFit.x);
+    cMaxX = Math.max(cMaxX, bestFit.x + bestFit.cw);
+    cMinY = Math.min(cMinY, bestFit.y);
+    cMaxY = Math.max(cMaxY, bestFit.y + bestFit.ch);
+  }
+}
+
+const boxW = cMaxX - cMinX,
+  boxH = cMaxY - cMinY;
+
+const finalTags = placed
+  .map(tag => {
+    const nwr = (tag.isRotated ? tag.ch : tag.cw) / boxW,
+      nhr = (tag.isRotated ? tag.cw : tag.ch) / boxH;
+    const rcx = tag.x + tag.cw / 2 - cMinX,
+      rcy = tag.y + tag.ch / 2 - cMinY;
+
+    return {
+      ...tag,
+      left: Math.round((rcx / boxW - nwr / 2) * 100),
+      top: Math.round((rcy / boxH - nhr / 2) * 100),
+      width: Math.round(nwr * 100),
+      height: Math.round(nhr * 100),
+      fontSizeCqw: Math.round((tag.scaledH / boxW) * 100 * 0.85),
+    };
+  })
+  .sort((a, b) => (a.top < b.top + b.height && b.top < a.top + a.height ? a.left - b.left : a.top - b.top));
+---
+
+<ul style={{ aspectRatio: boxW / boxH }}>
+  {
+    finalTags.map(tag => (
+      <li
+        style={{
+          left: `${tag.left}%`,
+          top: `${tag.top}%`,
+          width: `${tag.width}%`,
+          height: `${tag.height}%`,
+          fontSize: `${tag.fontSizeCqw}cqw`,
+          rotate: tag.isRotated ? '270deg' : undefined,
+        }}
+      >
+        <Link href={`/tags/${tag.word}`} class:list={{ i: tag.word === 'interactive' }}>
+          {tag.word}
+        </Link>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  ul {
+    position: relative;
+    container-type: inline-size;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & > li {
+      display: flex;
+      position: absolute;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--mono);
+
+      & > a {
+        border-bottom: max(0.05em, 2px) solid transparent;
+        color: inherit;
+        line-height: 1;
+        text-decoration: none;
+        white-space: nowrap;
+
+        &.i {
+          color: var(--data-c6);
+        }
+
+        &:hover {
+          border-bottom-color: currentColor;
+        }
+        &:active {
+          color: var(--link);
+        }
+      }
+    }
+  }
+</style>

@@ -1,0 +1,52 @@
+---
+import type { ImageMetadata } from 'astro';
+import { getCollection, render } from 'astro:content';
+import { version as katexVersion } from 'katex/package.json';
+import { dirname } from 'node:path';
+import BaseHead from '../../components/BaseHead.astro';
+import { SITE_TITLE } from '../../consts';
+import { getPostPath } from '../../utils/post';
+import PostNav from './_PostNav.astro';
+import SimplePost from './_SimplePost.astro';
+
+export async function getStaticPaths() {
+  const covers = import.meta.glob<{ default: ImageMetadata }>('/src/content/**/cover.{png,jpg,webp}', {
+    eager: true,
+  });
+  const coverPathMap = new Map<string, ImageMetadata>();
+  for (const [path, module] of Object.entries(covers)) coverPathMap.set(dirname(path), module.default);
+
+  const posts = await getCollection('blog');
+  return posts.map(post => {
+    const folder = dirname(`/${post.filePath}`);
+
+    return {
+      params: { postPath: getPostPath(post.data) },
+      props: { post, cover: coverPathMap.get(folder) },
+    };
+  });
+}
+
+type Props = Awaited<ReturnType<typeof getStaticPaths>>[number]['props'];
+const { post, cover } = Astro.props;
+
+const { Content, headings } = await render(post);
+---
+
+<html lang='en'>
+  <head>
+    <BaseHead title={`${post.data.title} | ${SITE_TITLE}`} description={post.data.summary} image={cover?.src} />
+    <link
+      rel='stylesheet'
+      href={`https://cdn.jsdelivr.net/npm/katex@${katexVersion}/dist/katex.min.css`}
+      crossorigin='anonymous'
+    />
+  </head>
+
+  <body>
+    <PostNav toc={headings} />
+    <SimplePost {...post} {cover}>
+      <Content />
+    </SimplePost>
+  </body>
+</html>

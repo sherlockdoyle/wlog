@@ -1,0 +1,84 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Link from './Link.astro';
+
+type Props = Pick<CollectionEntry<'blog'>['data'], 'tags' | 'level'>;
+const { tags, level } = Astro.props;
+
+const levelColor =
+  level < 1
+    ? `color-mix(in oklch, #0f0 ${Math.min(100, (1 - level) * 10)}%, var(--data-c4))`
+    : level > 15
+      ? `color-mix(in oklch, #f00 ${Math.min(100, (level - 15) * 10)}%, var(--data-c5))`
+      : `color-mix(in oklch, var(--data-c4), var(--data-c5) ${Math.round(((level - 1) / 14) * 100)}%)`;
+
+const a0 = Math.atan2(19 - 14, 3.34 - 12),
+  a1 = Math.atan2(19 - 14, 20.66 - 12) + 2 * Math.PI,
+  r = Math.hypot(4, -4);
+const levelAngle = a0 + ((level - 1) / 14) * (a1 - a0); // this will wrap around - I did that delibertely
+---
+
+<ul aria-label='Tags'>
+  {
+    tags.map(tag => (
+      <li>
+        <Link>{tag}</Link>
+      </li>
+    ))
+  }
+  <li>
+    <Link title='Level' style={{ color: levelColor }}>
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        stroke-width='2'
+        stroke-linecap='round'
+        stroke-linejoin='round'
+      >
+        <path d={`M12 14 l${(Math.cos(levelAngle) * r).toFixed(1)} ${(Math.sin(levelAngle) * r).toFixed(1)}`}></path>
+        <path d='M3.34 19a10 10 0 1 1 17.32 0'></path>
+      </svg>
+      {level}
+    </Link>
+  </li>
+</ul>
+
+<style>
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    & > li > a {
+      display: flex;
+      backdrop-filter: blur(0.25rem);
+      border: 1px solid currentColor;
+      border-radius: 1rem;
+      background-color: var(--bg-subtle);
+      padding: 0.3rem 0.8rem;
+      color: var(--fg);
+      font-size: 0.8rem;
+      font-family: var(--mono);
+      text-decoration: none;
+
+      &:hover {
+        background-color: var(--bg-hover);
+      }
+      &:active {
+        background-color: var(--bg-active);
+      }
+    }
+    & > li:last-child > a {
+      gap: 0.25rem;
+
+      & > svg {
+        height: 1.25em;
+      }
+    }
+  }
+</style>

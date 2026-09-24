@@ -1,0 +1,24 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  macros: CollectionEntry<'blog'>['data']['katexMacros'];
+}
+const { macros } = Astro.props;
+---
+
+<script is:inline src='https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js' crossorigin='anonymous'></script>
+<script is:inline define:vars={{ macros }}>
+  function renderMath() {
+    if (typeof window.katex === 'undefined') return;
+
+    document
+      .querySelectorAll('.math-inline')
+      .forEach(el => window.katex.render(el.textContent, el, { macros, displayMode: false, throwOnError: false }));
+    document
+      .querySelectorAll('.math-display')
+      .forEach(el => window.katex.render(el.textContent, el, { macros, displayMode: true, throwOnError: false }));
+  }
+
+  renderMath();
+</script>

@@ -1,0 +1,500 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import Settings from '../../components/btn/Settings.astro';
+import Link from '../../components/Link.astro';
+import Logo from '../../components/Logo.astro';
+import { SITE_TITLE } from '../../consts';
+---
+
+<!doctype html>
+<html lang='en'>
+  <head>
+    <BaseHead title={`Search | ${SITE_TITLE}`} description='Search something on W(log).' />
+
+    <link rel='modulepreload' href={`${import.meta.env.BASE_URL}pagefind/pagefind.js`} />
+    <script is:inline type='module'>
+      window.__loadPagefind = b => import(`${b}pagefind/pagefind.js`);
+    </script>
+
+    <style>
+      :root {
+        --content-width: 72rem;
+      }
+      body {
+        margin-inline: auto;
+        max-width: var(--content-width);
+      }
+
+      @keyframes tofro {
+        33% {
+          d: path('M7 12 14 12');
+        }
+        67% {
+          d: path('M10 12 17 12');
+        }
+        100% {
+          d: path('M14 12 18 12');
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      header {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        box-shadow: 0 4px 6px -1px #0008;
+        border-bottom: 1px solid var(--bg-hover-solid);
+        padding-right: clamp(0rem, 50vw - 32rem, 4rem);
+        width: 100%;
+        max-width: var(--content-width);
+
+        & > .logos {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          border-right: 1px solid var(--bg-hover-solid);
+          background-color: var(--bg-active-solid);
+          padding: 0.5rem;
+          width: var(--header-size);
+
+          & > a {
+            display: block;
+            line-height: 0;
+          }
+        }
+
+        & > .searches {
+          display: flex;
+          flex: 1;
+          flex-direction: column;
+          background-color: var(--bg-active-solid);
+
+          & > div {
+            position: relative;
+            padding: 1rem;
+
+            & > input {
+              outline: none;
+              border: none;
+              border-bottom: 1px solid currentColor;
+              background: none;
+              padding: 0.5rem;
+              padding-right: 2rem;
+              width: calc(100% - 1rem);
+              height: 2.5rem;
+              font-weight: 500;
+              font-size: 1rem;
+              font-family: var(--sans);
+
+              &:focus {
+                border-bottom-color: var(--link);
+              }
+            }
+
+            & > button {
+              position: absolute;
+              top: 0.5rem;
+              right: 0.5rem;
+              width: 3rem;
+              height: 3rem;
+
+              & > svg :is(path, circle) {
+                transition-duration: 0.3s;
+                transition-property: d, cx, cy;
+                transition-timing-function: ease;
+              }
+
+              &:is(.type, .search) > svg circle {
+                cx: 12px;
+                cy: 12px;
+              }
+              &.type > svg path {
+                transform-origin: 12px 12px;
+                animation: tofro 0.7s linear infinite alternate-reverse;
+                d: path('M6 12 10 12');
+              }
+              &.search > svg path {
+                transform-origin: 12px 12px;
+                animation: spin 1.9s linear infinite;
+                d: path('M12 12 16.34 16.34');
+              }
+            }
+          }
+        }
+      }
+
+      main {
+        margin-inline: auto;
+        padding: 1rem;
+        width: 100%;
+        max-width: calc(var(--content-width) - 2 * var(--header-size));
+        min-height: calc(100dvh - 8rem);
+
+        & > ol {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin: 0;
+          margin-bottom: 1rem;
+          padding: 0;
+          list-style: none;
+
+          & > li {
+            display: flex;
+            position: relative;
+            flex-direction: column;
+            cursor: pointer;
+            border-radius: 1rem;
+            background-color: var(--bg-subtle-solid);
+            padding: 1.5rem;
+
+            &:hover {
+              background-color: var(--bg-hover-solid);
+            }
+            &:active {
+              background-color: var(--bg-active-solid);
+            }
+
+            & > .summary {
+              margin-bottom: 0.25rem;
+              color: color-mix(in oklch, currentColor, transparent 10%);
+              font-weight: 500;
+              font-size: 0.9rem;
+              font-family: var(--sans);
+              letter-spacing: 0.05em;
+            }
+
+            & > h3 {
+              margin: 0 0 0.75rem 0;
+
+              & > a {
+                color: inherit;
+                font-weight: 700;
+                font-size: 1.5rem;
+                line-height: 1.2;
+                font-family: var(--sans);
+                text-decoration: none;
+                text-wrap: balance;
+
+                &::after {
+                  position: absolute;
+                  inset: 0;
+                  content: '';
+                }
+              }
+            }
+
+            & > .excerpt {
+              margin: 0 0 0.75rem 0;
+              color: color-mix(in oklch, currentColor, transparent 5%);
+              font-size: 1rem;
+              line-height: 1.6;
+              font-family: var(--serif);
+
+              & > :global(mark) {
+                margin-inline: -0.125rem;
+                border-radius: 0.25rem;
+                background-color: color-mix(in oklch, var(--data-c2), var(--bg) 50%);
+                padding-inline: 0.125rem;
+                color: inherit;
+              }
+            }
+
+            & > ul {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 0.75rem;
+              margin: 0;
+              padding: 0;
+              list-style: none;
+
+              & > :global(li > a) {
+                display: flex;
+                backdrop-filter: blur(0.25rem);
+                border: 1px solid currentColor;
+                border-radius: 1rem;
+                background-color: var(--bg-subtle);
+                padding: 0.3rem 0.8rem;
+                color: var(--fg);
+                font-size: 0.8rem;
+                font-family: var(--mono);
+                text-decoration: none;
+
+                &:hover {
+                  background-color: var(--bg-hover);
+                }
+                &:active {
+                  background-color: var(--bg-active);
+                }
+              }
+              & > :global(li:last-child > a) {
+                gap: 0.25rem;
+
+                & > svg {
+                  height: 1.25em;
+                }
+              }
+            }
+          }
+        }
+
+        &:has(> ol:empty) {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+        & > div {
+          display: none;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          color: color-mix(in oklch, var(--fg), var(--bg) 25%);
+
+          &:not([class='']) {
+            display: flex;
+          }
+
+          & > svg {
+            width: 4rem;
+            height: 4rem;
+
+            path:first-child {
+              transition: d 0.3s ease;
+            }
+          }
+
+          & > p {
+            display: none;
+            margin: 0;
+            font-family: var(--sans);
+            letter-spacing: 0.01em;
+          }
+          &.initial > p:first-of-type {
+            display: block;
+          }
+          &.empty {
+            & > svg path:first-child {
+              d: path('m8.5 8.5 5 5m0-5-5 5');
+            }
+            & > p:last-child {
+              display: block;
+            }
+          }
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <section class='logos'>
+        <Link href='/'>
+          <Logo small />
+        </Link>
+        <Settings />
+      </section>
+      <section class='searches'>
+        <div>
+          <input
+            id='search-input'
+            type='search'
+            placeholder='Search?'
+            autocomplete='off'
+            spellcheck='false'
+            autofocus
+          />
+          <button id='search-btn' class='btn-icon' aria-label='Clear Search'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              fill='none'
+              stroke='currentColor'
+              stroke-width='2'
+              stroke-linecap='round'
+              stroke-linejoin='round'
+            >
+              <path d='M16.66 16.66 21 21'></path>
+              <circle cx='11' cy='11' r='8'></circle>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </header>
+
+    <main>
+      <ol></ol>
+
+      <div class='initial'>
+        <svg
+          xmlns='http://www.w3.org/2000/svg'
+          viewBox='0 0 24 24'
+          fill='none'
+          stroke='currentColor'
+          stroke-width='1'
+          stroke-linecap='round'
+          stroke-linejoin='round'
+        >
+          <path d='m10 8.5 2.5 2.5m0 0-2.5 2.5'></path>
+          <circle cx='11' cy='11' r='8'></circle>
+          <path d='m21 21-4.3-4.3'></path>
+        </svg>
+
+        <p>Start typing to begin searching.</p>
+        <p>No results.</p>
+      </div>
+    </main>
+
+    <template id='search-result'>
+      <li>
+        <p class='summary'></p>
+        <h3><a></a></h3>
+        <p class='excerpt'></p>
+        <ul aria-label='Tags'>
+          <li>
+            <a title='Level'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                viewBox='0 0 24 24'
+                fill='none'
+                stroke='currentColor'
+                stroke-width='2'
+                stroke-linecap='round'
+                stroke-linejoin='round'
+              >
+                <path></path>
+                <path d='M3.34 19a10 10 0 1 1 17.32 0'></path>
+              </svg>
+            </a>
+          </li>
+        </ul>
+      </li>
+    </template>
+    <script>
+      declare global {
+        interface Window {
+          __loadPagefind: (baseUrl: string) => Promise<any>;
+        }
+      }
+      let pagefind: PagefindInstance;
+      async function getPagefind() {
+        if (!pagefind) {
+          pagefind = await window.__loadPagefind(import.meta.env.BASE_URL);
+          await pagefind.init();
+        }
+        return pagefind;
+      }
+
+      const searchResultTemplate = document.getElementById('search-result') as HTMLTemplateElement,
+        resultsList = document.querySelector<HTMLOListElement>('main>ol')!,
+        searchStatus = document.querySelector('main>div')!,
+        searchInput = document.getElementById('search-input') as HTMLInputElement,
+        searchButton = document.getElementById('search-btn') as HTMLButtonElement;
+
+      async function performSearch() {
+        searchButton.classList.remove('type');
+        searchButton.classList.add('search');
+
+        const query = searchInput.value.trim();
+
+        const url = new URL(window.location.href);
+        if (query) {
+          url.searchParams.set('q', query);
+          searchStatus.className = '';
+        } else {
+          url.searchParams.delete('q');
+          searchStatus.className = 'initial';
+        }
+        window.history.replaceState({}, '', url.toString());
+
+        if (!query) {
+          resultsList.replaceChildren();
+          searchButton.classList.remove('search');
+          return;
+        }
+
+        try {
+          const pagefind = await getPagefind();
+          const { results } = await pagefind.search(query);
+          if (!results.length) {
+            resultsList.replaceChildren();
+            searchStatus.className = 'empty';
+            return;
+          }
+
+          const fragment = document.createDocumentFragment();
+          await Promise.all(
+            results.map(async result => {
+              const data = await result.data();
+              const resultEl = searchResultTemplate.content.cloneNode(true) as DocumentFragment;
+
+              resultEl.querySelector<HTMLParagraphElement>('.summary')!.innerText = data.meta.summary;
+
+              const titleLink = resultEl.querySelector<HTMLAnchorElement>('h3>a')!;
+              titleLink.href = data.url;
+              titleLink.innerText = data.meta.title;
+
+              resultEl.querySelector('.excerpt')!.innerHTML = data.excerpt;
+
+              resultEl.querySelector('ul')!.prepend(
+                ...data.filters.tags.map(tag => {
+                  const li = document.createElement('li'),
+                    a = document.createElement('a');
+                  a.innerText = tag;
+                  li.appendChild(a);
+                  return li;
+                }),
+              );
+
+              const levelLink = resultEl.querySelector<HTMLAnchorElement>('ul>li:last-child>a')!;
+              levelLink.appendChild(document.createTextNode(data.filters.level[0]));
+              const level = parseInt(data.filters.level[0], 10),
+                levelAngle = 2.617981175819824 + (level - 1) * 0.29920111493783796,
+                levelRadius = 5.656854249492381;
+              levelLink.style.color =
+                level < 1
+                  ? `color-mix(in oklch, #0f0 ${Math.min(100, (1 - level) * 10)}%, var(--data-c4))`
+                  : level > 15
+                    ? `color-mix(in oklch, #f00 ${Math.min(100, (level - 15) * 10)}%, var(--data-c5))`
+                    : `color-mix(in oklch, var(--data-c4), var(--data-c5) ${Math.round(((level - 1) / 14) * 100)}%)`;
+              levelLink
+                .querySelector<SVGPathElement>('svg>path:first-child')!
+                .setAttribute(
+                  'd',
+                  `M12 14 l${Math.cos(levelAngle) * levelRadius} ${Math.sin(levelAngle) * levelRadius}`,
+                );
+
+              fragment.appendChild(resultEl);
+            }),
+          );
+          resultsList.replaceChildren(fragment);
+        } finally {
+          searchButton.classList.remove('search');
+        }
+      }
+
+      if (window.location.search) {
+        searchInput.value = new URLSearchParams(window.location.search).get('q') ?? '';
+        performSearch();
+      }
+
+      let debounceTimeout: ReturnType<typeof setTimeout>;
+      searchInput.addEventListener('input', () => {
+        searchButton.classList.remove('search');
+        searchButton.classList.add('type');
+        clearTimeout(debounceTimeout);
+        debounceTimeout = setTimeout(performSearch, 300);
+      });
+      searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          clearTimeout(debounceTimeout);
+          performSearch();
+        }
+      });
+      searchButton.addEventListener('click', performSearch);
+    </script>
+  </body>
+</html>

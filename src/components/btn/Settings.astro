@@ -1,0 +1,206 @@
+<button id='settings-btn' class='btn-icon' title='Settings' popovertarget='settings-popover'>
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    stroke-width='2'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+  >
+    <path class='l' d='M10 7 19 7M5 17 14 17'></path>
+    <circle class='cl' cx='7' cy='7' r='3'></circle>
+    <circle class='cr' cx='17' cy='17' r='3'></circle>
+  </svg>
+</button>
+
+<div id='settings-popover' popover='auto'>
+  <div id='theme-toggle'>
+    <span>Theme</span>
+    <div>
+      <button>Light</button>
+      <button>System</button>
+      <button>Dark</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function hexagon(x: number, y: number, r: number): string {
+    return `polygon(${Array.from({ length: 6 }, (_, i) => {
+      const a = (i / 3 + 0.5) * Math.PI;
+      return `${Math.round(x + r * Math.cos(a))}px ${Math.round(y + r * Math.sin(a))}px`;
+    }).join(',')})`;
+  }
+
+  const KEY = 'sd.wlog';
+  function applySettings(
+    { theme = 'system' }: Partial<{ theme: 'light' | 'system' | 'dark' }> = JSON.parse(
+      localStorage.getItem(KEY) ?? '{}',
+    ),
+  ) {
+    const logoRect = document.getElementById('logo')!.getBoundingClientRect(),
+      cx = logoRect.left + logoRect.width / 2,
+      cy = logoRect.top + logoRect.height / 2;
+    document.documentElement.style.setProperty('--tc-from', hexagon(cx, cy, 0));
+    document.documentElement.style.setProperty(
+      '--tc-to',
+      hexagon(
+        cx,
+        cy,
+        Math.max(
+          Math.hypot(cx, cy),
+          Math.hypot(cx, window.innerHeight - cy),
+          Math.hypot(window.innerWidth - cx, cy),
+          Math.hypot(window.innerWidth - cx, window.innerHeight - cy),
+        ) / Math.cos(Math.PI / 6),
+      ),
+    );
+    if (theme == 'system') document.documentElement.dataset.theme = '';
+    else document.documentElement.dataset.theme = theme;
+  }
+  function setSetting(key: string, val: unknown) {
+    const settings = JSON.parse(localStorage.getItem(KEY) ?? '{}');
+    settings[key] = val;
+    localStorage.setItem(KEY, JSON.stringify(settings));
+    applySettings(settings);
+  }
+  applySettings();
+
+  document.querySelectorAll<HTMLButtonElement>('#theme-toggle > div > button').forEach(button =>
+    button.addEventListener('click', () => {
+      const theme = button.innerText.toLowerCase();
+      if (document.startViewTransition && document.documentElement.dataset.theme !== theme)
+        document.startViewTransition(() => setSetting('theme', theme));
+      else setSetting('theme', theme);
+    }),
+  );
+</script>
+
+<style>
+  #settings-btn {
+    anchor-name: --settings-btn;
+    overflow: hidden;
+
+    & > svg {
+      overflow: visible;
+
+      :is(path, circle) {
+        transition-duration: 0.3s;
+        transition-property: d, cx, cy, r;
+        transition-timing-function: ease;
+      }
+    }
+
+    &:hover > svg {
+      .l {
+        d: path('M5 7 14 7M10 17 19 17');
+      }
+      .cl {
+        cx: 17px;
+      }
+      .cr {
+        cx: 7px;
+      }
+    }
+    &:active > svg {
+      transform: scale(0.9);
+      transition-duration: 0.2s;
+    }
+
+    &:has(+ #settings-popover:popover-open) > svg {
+      transform: none;
+
+      .l {
+        d: path('M5 19 19 5M5 5 19 19');
+      }
+      & > circle {
+        r: 32px;
+        cx: 12px;
+        cy: 12px;
+      }
+    }
+  }
+
+  #settings-popover {
+    position-anchor: --settings-btn;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-inline;
+    outline: 1px solid var(--bg-hover-solid);
+    box-shadow: var(--shadow-popover);
+    border: none;
+    border-radius: 1rem;
+    background-color: var(--bg-active-solid);
+    padding: 1rem;
+    font-family: var(--sans);
+
+    & > div {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+
+      & > span {
+        color: color-mix(in oklch, currentColor, transparent 10%);
+        font-weight: 600;
+        font-size: 0.9rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+    }
+
+    #theme-toggle > div {
+      display: flex;
+      border-radius: 0.5rem;
+      overflow: hidden;
+
+      & > button {
+        cursor: pointer;
+        border: none;
+        background-color: var(--bg-subtle);
+        padding: 0.75rem;
+        color: inherit;
+        font-weight: 500;
+        font-size: 1rem;
+        font-family: inherit;
+
+        :root[data-theme='light'] &:first-child {
+          color: var(--link);
+        }
+        :root[data-theme=''] &:nth-child(2) {
+          color: var(--link);
+        }
+        :root[data-theme='dark'] &:last-child {
+          color: var(--link);
+        }
+
+        &:hover {
+          background-color: var(--bg-hover);
+        }
+        &:active {
+          background-color: var(--bg-active);
+        }
+      }
+    }
+  }
+</style>
+
+<style is:global>
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 0;
+  }
+  ::view-transition-new(root) {
+    z-index: 1;
+    clip-path: var(--tc-to);
+    transition: clip-path 0.5s ease-in-out;
+
+    @starting-style {
+      clip-path: var(--tc-from);
+    }
+  }
+</style>

@@ -1,0 +1,189 @@
+---
+import { getCollection } from 'astro:content';
+import FormattedDate from '../components/FormattedDate.astro';
+import Link from '../components/Link.astro';
+import Tags from '../components/Tags.astro';
+import { getPostPath } from '../utils/post';
+
+const posts = await getCollection('blog');
+const recentPosts = posts
+  .sort(
+    (a, b) =>
+      (b.data.updatedDate ?? b.data.publishDate).getTime() - (a.data.updatedDate ?? a.data.publishDate).getTime(),
+  )
+  .slice(0, 11);
+const tags = posts.reduce(
+  (acc, post) => {
+    post.data.tags.forEach(tag => (acc[tag] = (acc[tag] ?? 0) + 1));
+    return acc;
+  },
+  {} as Record<string, number>,
+);
+---
+
+<div class='header'>
+  <h2>Recent Posts</h2>
+  <div>
+    <Link href='/search'>Search</Link>
+    <!-- <Link href='/tags'>Tags</Link> -->
+    <!-- <Link href='/levels'>Levels</Link> -->
+    <!-- <Link href='/year'>By Year</Link> -->
+  </div>
+</div>
+
+<ol>
+  <!-- <li class='tag-cloud'>
+      <h3>Tags</h3>
+      <TagCloud {tags} />
+    </li> -->
+
+  {
+    recentPosts.slice(0, 10).map(post => (
+      <li>
+        <FormattedDate date={post.data.updatedDate ?? post.data.publishDate} />
+        <h3>
+          <Link href={`/${getPostPath(post.data)}`}>{post.data.title}</Link>
+        </h3>
+        <p>{post.data.summary}</p>
+        <Tags tags={post.data.tags} level={post.data.level} />
+      </li>
+    ))
+  }
+</ol>
+
+{
+  recentPosts.length < 10 && (
+    <p class='footer'>
+      <Link href='/search'>Search</Link> for more posts{/* or see all posts <Link href='/year'>by year</Link>*/}.
+    </p>
+  )
+}
+
+<style>
+  :is(.header > div, p) > a {
+    color: var(--link);
+    font-family: var(--sans);
+    text-decoration: none;
+
+    &:hover {
+      border-bottom: 1px dotted currentColor;
+    }
+    &:active {
+      border-bottom: 1px solid currentColor;
+    }
+  }
+
+  .header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+
+    & > h2 {
+      margin: 0;
+      font-weight: 700;
+      font-size: 2rem;
+      font-family: var(--sans);
+    }
+
+    & > div {
+      display: flex;
+      gap: 1rem;
+      margin-left: auto;
+    }
+  }
+
+  ol {
+    margin: 0;
+    margin-bottom: 1rem;
+    padding: 0;
+    list-style: none;
+
+    & > li.tag-cloud {
+      float: right;
+      margin: 0 0 1rem 1rem;
+      border: 1px solid color-mix(in oklch, var(--fg), var(--bg));
+      border-radius: 0.5rem;
+      width: 50%;
+      max-width: 32rem;
+
+      @media (width < 40rem) {
+        margin: -0.5rem 0 1.5rem;
+        width: 100%;
+        max-width: none;
+      }
+
+      & > h3 {
+        margin: 0;
+        margin-bottom: 0.5rem;
+        color: color-mix(in oklch, var(--fg), var(--bg) 25%);
+        font-weight: 500;
+        font-size: 1.25rem;
+        line-height: 1.1;
+        font-family: var(--sans);
+      }
+    }
+
+    & > li:not(.tag-cloud) {
+      display: flex;
+      position: relative;
+      flex-direction: column;
+      gap: 0.75rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      border-radius: 1rem;
+      background-color: var(--bg-subtle-solid);
+      padding: 1.5rem;
+
+      &:hover {
+        background-color: var(--bg-hover-solid);
+      }
+      &:active {
+        background-color: var(--bg-active-solid);
+      }
+
+      & > :global(time) {
+        color: color-mix(in oklch, currentColor, transparent 10%);
+        font-weight: 500;
+        font-size: 0.9rem;
+        font-family: var(--sans);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      & > h3 {
+        margin: 0;
+
+        & > a {
+          color: inherit;
+          font-weight: 700;
+          font-size: 1.5rem;
+          line-height: 1.2;
+          font-family: var(--sans);
+          text-decoration: none;
+          text-wrap: balance;
+
+          &::after {
+            position: absolute;
+            inset: 0;
+            content: '';
+          }
+        }
+      }
+
+      & > p {
+        margin: 0;
+        color: color-mix(in oklch, currentColor, transparent 5%);
+        font-size: 1rem;
+        line-height: 1.6;
+        font-family: var(--serif);
+      }
+    }
+  }
+
+  .footer {
+    font-size: 0.9rem;
+    font-family: var(--sans);
+  }
+</style>

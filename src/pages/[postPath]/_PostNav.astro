@@ -1,0 +1,263 @@
+---
+import type { MarkdownHeading } from 'astro';
+import Logo from '../../components/Logo.astro';
+import Search from '../../components/btn/Search.astro';
+import Settings from '../../components/btn/Settings.astro';
+
+interface Props {
+  toc: MarkdownHeading[];
+}
+const { toc } = Astro.props;
+
+// TODO: render math in heading
+function simpleMathReplace(str: string): string {
+  return str.replaceAll('\\times', '×');
+}
+---
+
+<header>
+  <button id='logo-menu' popovertarget='postnav-popover'>
+    <Logo small />
+  </button>
+
+  <div id='postnav-popover' popover='auto'>
+    <div class='header'>
+      <Search />
+      <Settings />
+    </div>
+
+    <aside>
+      <nav aria-label='Table of contents'>
+        <h2>On this page</h2>
+        <ol>
+          {
+            toc
+              .filter(({ depth }) => depth <= 4)
+              .map(heading => (
+                <>
+                  <li style={{ paddingLeft: `${Math.max(0, heading.depth - 2)}rem` }}>
+                    <a href={`#${heading.slug}`}>{simpleMathReplace(heading.text)}</a>
+                  </li>
+                </>
+              ))
+          }
+        </ol>
+      </nav>
+    </aside>
+  </div>
+</header>
+
+<script>
+  const headings = document.querySelectorAll('.post-content [id]:is(h2,h3,h4)');
+  const headerPopover = document.getElementById('postnav-popover')!,
+    sidebar = headerPopover.querySelector('aside')!,
+    tocItems = sidebar.querySelectorAll('a');
+
+  const observer = new IntersectionObserver(
+    entries =>
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          tocItems.forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${id}`) link.classList.add('active');
+          });
+        }
+      }),
+    { root: null, rootMargin: '-80px 0px -70% 0px', threshold: 1 },
+  );
+  headings.forEach(heading => observer.observe(heading));
+
+  sidebar.addEventListener('click', e => {
+    if ((e.target as HTMLElement).closest('a')) headerPopover.hidePopover();
+  });
+</script>
+
+<style>
+  :root {
+    scroll-behavior: smooth;
+    scroll-padding-top: calc(var(--header-size) * 1.25);
+  }
+
+  header {
+    position: fixed;
+    top: 0;
+    left: max(0px, 50vw - 32rem - var(--header-size));
+    z-index: 100;
+
+    & > #logo-menu {
+      anchor-name: --logo-btn;
+      cursor: pointer;
+      --sc: light-dark(#0004, #0006);
+      box-shadow:
+        0 4px 6px -1px var(--sc),
+        0 2px 4px -2px var(--sc);
+      border: none;
+      border-radius: var(--header-radius);
+      background-color: var(--bg-subtle-solid);
+      padding: 0.5rem;
+      width: var(--header-size);
+      height: var(--header-size);
+      overflow: hidden;
+
+      & > :global(#logo) {
+        overflow: visible;
+
+        path {
+          transition-duration: 0.3s;
+          transition-property: stroke, stroke-width, fill, d;
+          transition-timing-function: ease;
+        }
+      }
+
+      &:not(:hover, :focus-visible) > :global(#logo) {
+        .o.l {
+          d: path('M128 608-288 368V-112L128-352');
+        }
+        .a {
+          stroke-width: 15px;
+          d: path('M 38 190 L 218 190 M 38 66 L 218 66');
+        }
+        .p {
+          stroke: var(--fg);
+          stroke-width: 15px;
+          d: path('M38 128C58 128 78 128 98 128 118 128 138 128 158 128 178 128 198 128 218 128');
+        }
+        .o.r {
+          d: path('M128-352 544-112V368L128 608');
+        }
+      }
+
+      &:has(+ #postnav-popover:popover-open) {
+        box-shadow: none;
+        border-radius: 0 var(--header-radius) 0 0;
+
+        @media (width < 112rem) {
+          border-radius: var(--header-radius) 0 0 0;
+        }
+
+        & > :global(#logo) {
+          .o.l {
+            d: path('M128 608-288 368V-112L128-352');
+          }
+          .a {
+            stroke-width: 15px;
+            d: path('M57.3 57.3 198.7 198.7M198.7 57.3 57.3 198.7');
+          }
+          .p {
+            d: path(
+              'M-211 467C-322.4 344.1-362.4 172.4-316.8 12.9-271.3-146.6-146.6-271.3 12.9-316.8 172.4-362.4 344.1-322.4 467-211'
+            );
+          }
+          .o.r {
+            d: path('M128-352 544-112V368L128 608');
+          }
+        }
+      }
+    }
+  }
+
+  #postnav-popover {
+    position-anchor: --logo-btn;
+    position-try-fallbacks: flip-inline;
+    inset: auto;
+    top: anchor(top);
+    right: anchor(right);
+    flex-direction: column;
+    transition: clip-path 0.3s ease-out;
+    outline: 1px solid var(--bg-hover-solid);
+    box-shadow: var(--shadow-popover);
+    border: none;
+    border-radius: var(--header-radius);
+    background: none;
+    padding: 0;
+    width: 24rem;
+    max-width: 100vw;
+    max-height: 100dvh;
+    pointer-events: none;
+
+    --cx: calc(100% - var(--header-radius));
+    @media (width < 112rem) {
+      --cx: var(--header-radius);
+    }
+    &:popover-open {
+      display: flex;
+      clip-path: circle(150% at var(--cx) var(--header-radius));
+
+      @starting-style {
+        clip-path: circle(0% at var(--cx) var(--header-radius));
+      }
+    }
+
+    & > .header {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      z-index: 10;
+      margin-right: var(--header-size);
+      background-color: var(--bg-subtle-solid);
+      padding: 0.5rem;
+      height: var(--header-size);
+      pointer-events: auto;
+
+      @media (width < 112rem) {
+        flex-direction: row;
+        margin-right: 0;
+        margin-left: var(--header-size);
+      }
+    }
+
+    & > aside {
+      background-color: var(--bg-active-solid);
+      padding: 1rem;
+      overflow: auto;
+      pointer-events: auto;
+      font-family: var(--sans);
+
+      & > nav {
+        & > h2 {
+          margin-bottom: 1rem;
+          font-size: 0.9rem;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        & > ol {
+          margin-top: 0.25rem;
+          padding-inline-start: 1rem;
+          list-style: none;
+
+          & > li {
+            margin-bottom: 0.5rem;
+
+            &:has(> a:focus-visible) {
+              outline: 2px solid var(--link);
+              outline-offset: 3px;
+            }
+
+            & > a {
+              color: var(--fg);
+              line-height: 1.4;
+              text-decoration: none;
+
+              &:hover {
+                border-bottom: 1px solid currentColor;
+              }
+              &:active {
+                color: var(--link);
+              }
+              &.active {
+                color: var(--link);
+                font-weight: 600;
+              }
+              &:focus-visible {
+                outline: none;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+</style>

@@ -1,0 +1,58 @@
+---
+interface Props {
+  small?: boolean;
+}
+const { small } = Astro.props;
+---
+
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256' id='logo' class:list={{ small }}>
+  <path
+    fill='none'
+    class='o l'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+    stroke-width='10'
+    d='M128 248 24 188V68L128 8'></path>
+  <path class='a' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M38 128 218 128M128 28 128 228'
+  ></path>
+  <path
+    fill='none'
+    class='p'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+    stroke-width='7'
+    d='M24 188C25 164 23 133.3 37.6 111.9 49.8 94 72.6 87.4 92.6 82.9 138.1 72.9 185.6 70.7 231.9 68'></path>
+  <path
+    fill='none'
+    class='o r'
+    stroke-linecap='round'
+    stroke-linejoin='round'
+    stroke-width='10'
+    d='M128 8 232 68V188L128 248'></path>
+</svg>
+
+<style>
+  svg {
+    .o {
+      stroke: var(--data-c2);
+    }
+    .a {
+      stroke: var(--fg);
+    }
+    .p {
+      stroke: var(--data-c1);
+    }
+
+    &.small {
+      .o {
+        stroke-width: 15px;
+      }
+      .a {
+        stroke-width: 10px;
+      }
+      .p {
+        stroke-width: 15px;
+      }
+    }
+  }
+</style>
